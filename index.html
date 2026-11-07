@@ -86,11 +86,12 @@ section{padding:11px 12px;border-radius:12px;border-top:3px solid var(--sc,var(-
 h2{font-size:11px;margin-bottom:8px;color:var(--sc,var(--muted))}
 .stat .v{font-size:17px;color:var(--vc,var(--fg))}.stat .l{font-size:11px}
 .stat .v.hi{color:var(--hi)}.stat .v.lo{color:var(--lo)}
-section:nth-of-type(1){--sc:var(--c-cell);--vc:var(--c-cell)}
-section:nth-of-type(2){--sc:var(--c-cap);--vc:var(--c-cap)}
-section:nth-of-type(3){--sc:var(--c-temp);--vc:var(--c-temp)}
-section:nth-of-type(4){--sc:var(--c-res);--vc:var(--c-res)}
-section:nth-of-type(5){--sc:var(--c-cur)}
+section.s1{--sc:var(--c-cell);--vc:var(--c-cell)}
+section.s2{--sc:var(--c-cap);--vc:var(--c-cap)}
+section.s3{--sc:var(--c-temp);--vc:var(--c-temp)}
+section.s4{--sc:var(--c-res);--vc:var(--c-res)}
+section.s5{--sc:var(--c-cur)}
+.col{display:contents}
 .cells{gap:3px}.cell{grid-template-columns:22px 1fr 52px;gap:6px}
 .track{height:12px}.track i{background:linear-gradient(90deg,var(--c-cell),var(--c-volt))}
 .cell.max .track i{background:var(--bar-hi)}.cell.min .track i{background:var(--bar-lo)}
@@ -99,6 +100,33 @@ section:nth-of-type(5){--sc:var(--c-cur)}
 .note{font-size:11px;margin-top:6px}
 .rw{gap:5px 10px}.rw div{font-size:12px;color:var(--c-res)}.rw span{width:16px;color:var(--muted)}
 .chip:nth-child(1) b{color:var(--good)}.chip:nth-child(2) b{color:var(--c-cur)}.chip:nth-child(3) b{color:var(--c-cap)}
+/* Laptop / poziomo: trzy kolumny na jednym ekranie */
+@media (min-width:900px) and (min-height:420px){
+  body{font-size:15px;padding:12px 24px}
+  .wrap{max-width:1500px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr);gap:12px 16px;align-items:start}
+  header,.status,.err{grid-column:1/-1}
+  header{flex-wrap:nowrap}
+  h1{font-size:18px}
+  .col{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .flow{padding:14px 16px}
+  .arrow{width:46px;height:46px;font-size:24px}
+  .fl-state{font-size:22px}.fl-sub{font-size:14px}
+  .fl-p b{font-size:36px}
+  .hero{padding:14px 16px}
+  .soc{font-size:60px}.soc small{font-size:26px}
+  .big{font-size:24px}.big em,.big span{font-size:14px}
+  .chip{font-size:14px;padding:6px 12px}
+  section{padding:14px 16px}
+  h2{font-size:12px;margin-bottom:10px}
+  .stat .v{font-size:22px}.stat .l{font-size:13px}
+  .cells{gap:4px}
+  .track{height:clamp(11px,2.2vh,20px)}
+  .cell{grid-template-columns:26px 1fr 60px}
+  .cell .val{font-size:15px}.cell .n{font-size:12px}
+  .axis{font-size:12px;margin:6px 66px 0 32px}
+  .note{font-size:12px}
+  .rw{grid-template-columns:repeat(4,1fr)}.rw div{font-size:14px}
+}
 </style>
 </head>
 <body>
@@ -110,6 +138,7 @@ section:nth-of-type(5){--sc:var(--c-cur)}
   <div class="status"><span class="pill demo" id="mode">dane przykładowe</span><span id="info">Zamknij oficjalną aplikację JK BMS, zanim klikniesz Połącz.</span></div>
   <div class="err" id="err" hidden></div>
 
+  <div class="col">
   <div class="flow idle" id="flow">
     <div class="arrow" id="arrow">●</div>
     <div><div class="fl-state" id="fstate">Bezczynny</div><div class="fl-sub" id="fsub">Brak przepływu prądu</div></div>
@@ -131,7 +160,18 @@ section:nth-of-type(5){--sc:var(--c-cur)}
     <div class="chip"><i class="dot" id="d-bal"></i>Balanser <b id="t-bal"></b></div>
   </div>
 
-  <section>
+  <section class="s2">
+    <h2>Pojemność</h2>
+    <div class="stats">
+      <div class="stat"><div class="v" id="rem">-</div><div class="l">Pozostało (Ah)</div></div>
+      <div class="stat"><div class="v" id="nom">-</div><div class="l">Nominalna (Ah)</div></div>
+      <div class="stat"><div class="v" id="cyc">-</div><div class="l">Cykle</div></div>
+    </div>
+  </section>
+  </div>
+
+  <div class="col">
+  <section class="s1">
     <h2>Ogniwa</h2>
     <div class="stats">
       <div class="stat"><div class="v hi" id="vmax">-</div><div class="l">Najwyższe (V)</div></div>
@@ -142,33 +182,27 @@ section:nth-of-type(5){--sc:var(--c-cur)}
     <div class="axis"><span id="ax0"></span><span id="ax1"></span></div>
     <p class="note">Oś jest powiększona, żeby było widać różnice rzędu miliwoltów.</p>
   </section>
+  </div>
 
-  <section>
-    <h2>Pojemność</h2>
-    <div class="stats">
-      <div class="stat"><div class="v" id="rem">-</div><div class="l">Pozostało (Ah)</div></div>
-      <div class="stat"><div class="v" id="nom">-</div><div class="l">Nominalna (Ah)</div></div>
-      <div class="stat"><div class="v" id="cyc">-</div><div class="l">Cykle</div></div>
-    </div>
-  </section>
-
-  <section>
+  <div class="col">
+  <section class="s3">
     <h2>Temperatury (°C)</h2>
     <div class="temps" id="temps"></div>
   </section>
 
-  <section>
+  <section class="s4">
     <h2>Rezystancja przewodów balansera (Ω)</h2>
     <div class="rw" id="rw"></div>
   </section>
 
-  <section>
+  <section class="s5">
     <h2>Ustawienia odczytu</h2>
     <div class="status">Układ ramki:
       <button type="button" class="btn sec" id="ver">Auto</button>
     </div>
     <p class="note" id="vernote">Auto rozpoznaje układ po wersji sprzętu BMS (od 11.x jest 32S). Gdy wartości wyglądają dziwnie, przełącz ręcznie na 24S albo 32S. Dla Twojego BMS (16S, grzałka, czujniki T1 do T5) powinno być 32S.</p>
   </section>
+  </div>
 </div>
 
 <script>
