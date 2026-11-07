@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>JK BMS na żywo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0c1210">
+<style>
+:root{
+  --bg:#0c1210;--surface:#151d1a;--fg:#e8f0ec;--muted:#8fa399;--line:#26332d;
+  --accent:#3ddc84;--good:#3ddc84;--warn:#f0b24a;--bad:#ff6b6b;--hi:#6db3ff;--lo:#ff7b7b;
+  --bar:#1f5a3c;--bar-hi:#2c5f9a;--bar-lo:#7a2f2f;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,Consolas,monospace;
+  color-scheme:dark}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f3f5f4;--surface:#fff;--fg:#14201b;--muted:#5b6b64;--line:#d9e0dc;
+  --accent:#0d8a4f;--good:#0d8a4f;--warn:#b36b00;--bad:#c62828;--hi:#1565c0;--lo:#c62828;
+  --bar:#bfe3cf;--bar-hi:#7fb4ee;--bar-lo:#f0a3a3;color-scheme:light}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.4;
+ padding:16px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+h1{font-size:18px;margin:0;font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--accent);color:var(--bg);border:0;border-radius:99px;padding:9px 18px;font-weight:600}
+.btn.sec{background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.status{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{border-radius:99px;padding:3px 10px;border:1px solid var(--line);background:var(--surface);font-family:var(--mono);font-size:12px}
+.pill.live{color:var(--good);border-color:var(--good)} .pill.demo{color:var(--warn);border-color:var(--warn)}
+.err{background:var(--surface);border:1px solid var(--bad);color:var(--bad);border-radius:10px;padding:10px 12px;font-size:14px}
+.flow{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;border-radius:14px;padding:16px;border:2px solid var(--c);background:var(--surface);--c:var(--muted)}
+.flow.chg{--c:var(--good)}.flow.dis{--c:var(--warn)}
+.arrow{width:54px;height:54px;border-radius:50%;background:var(--c);color:var(--bg);display:grid;place-items:center;font-size:30px;font-weight:700;line-height:1}
+.fl-state{font-size:24px;font-weight:600;color:var(--c);line-height:1.15}
+.fl-sub{font-size:14px;color:var(--muted);margin-top:2px}
+.fl-p{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;color:var(--c)}
+.fl-p b{font-size:38px;font-weight:600;line-height:1}.fl-p span{font-size:16px}
+.hero{background:var(--surface);border-radius:14px;padding:18px 16px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.soc{font-size:64px;font-weight:600;line-height:1;color:var(--good);font-variant-numeric:tabular-nums}.soc small{font-size:28px}
+.big{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}.big span{font-size:14px;color:var(--muted);font-weight:400;margin-left:3px}
+.big em{font-style:normal;font-size:14px;color:var(--muted);font-weight:400;margin-right:6px}
+.meter{height:10px;border-radius:5px;background:var(--line);overflow:hidden;grid-column:1/-1}.meter i{display:block;height:100%;background:var(--good)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:99px;background:var(--surface);font-size:14px;border:1px solid var(--line)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--good)}.dot.off{background:var(--muted)}
+section{background:var(--surface);border-radius:14px;padding:16px}
+h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat .v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;font-family:var(--mono)}.stat .l{font-size:13px;color:var(--muted)}
+.hi{color:var(--hi)}.lo{color:var(--lo)}
+.cells{display:grid;gap:5px}
+.cell{display:grid;grid-template-columns:28px 1fr 62px;gap:8px;align-items:center;font-variant-numeric:tabular-nums}
+.cell .n{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.track{height:18px;background:var(--line);border-radius:4px;overflow:hidden}.track i{display:block;height:100%;background:var(--bar);border-radius:4px}
+.cell.max .track i{background:var(--bar-hi)}.cell.min .track i{background:var(--bar-lo)}
+.cell .val{font-family:var(--mono);font-size:15px;text-align:right}
+.cell.max .val{color:var(--hi);font-weight:600}.cell.min .val{color:var(--lo);font-weight:600}
+.axis{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-family:var(--mono);margin:8px 70px 0 36px}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.temps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rw{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 12px}
+.rw div{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;display:flex;gap:6px}
+.rw span{color:var(--muted);width:20px}
+@media(max-width:380px){.soc{font-size:52px}.stats,.temps{grid-template-columns:repeat(2,1fr)}.rw{grid-template-columns:repeat(2,1fr)}.fl-p b{font-size:30px}.fl-state{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>JK BMS</h1>
+    <button type="button" class="btn" id="connect">Połącz z BMS</button>
+  </header>
+  <div class="status"><span class="pill demo" id="mode">dane przykładowe</span><span id="info">Zamknij oficjalną aplikację JK BMS, zanim klikniesz Połącz.</span></div>
+  <div class="err" id="err" hidden></div>
+
+  <div class="flow idle" id="flow">
+    <div class="arrow" id="arrow">●</div>
+    <div><div class="fl-state" id="fstate">Bezczynny</div><div class="fl-sub" id="fsub">Brak przepływu prądu</div></div>
+    <div class="fl-p"><b id="fpow">0</b><span> W</span></div>
+  </div>
+
+  <div class="hero">
+    <div class="soc"><span id="soc">-</span><small>%</small></div>
+    <div>
+      <div class="big"><em>Napięcie</em><b id="volt">-</b><span>V</span></div>
+      <div class="big"><em>Prąd</em><b id="cur">-</b><span>A</span></div>
+    </div>
+    <div class="meter"><i id="meter"></i></div>
+  </div>
+
+  <div class="chips">
+    <div class="chip"><i class="dot" id="d-chg"></i>Ładowanie <b id="t-chg"></b></div>
+    <div class="chip"><i class="dot" id="d-dis"></i>Rozładowanie <b id="t-dis"></b></div>
+    <div class="chip"><i class="dot" id="d-bal"></i>Balanser <b id="t-bal"></b></div>
+  </div>
+
+  <section>
+    <h2>Ogniwa</h2>
+    <div class="stats">
+      <div class="stat"><div class="v hi" id="vmax">-</div><div class="l">Najwyższe (V)</div></div>
+      <div class="stat"><div class="v lo" id="vmin">-</div><div class="l">Najniższe (V)</div></div>
+      <div class="stat"><div class="v" id="vdiff">-</div><div class="l">Różnica (mV)</div></div>
+    </div>
+    <div class="cells" id="cells" style="margin-top:16px"></div>
+    <div class="axis"><span id="ax0"></span><span id="ax1"></span></div>
+    <p class="note">Oś jest powiększona, żeby było widać różnice rzędu miliwoltów.</p>
+  </section>
+
+  <section>
+    <h2>Pojemność</h2>
+    <div class="stats">
+      <div class="stat"><div class="v" id="rem">-</div><div class="l">Pozostało (Ah)</div></div>
+      <div class="stat"><div class="v" id="nom">-</div><div class="l">Nominalna (Ah)</div></div>
+      <div class="stat"><div class="v" id="cyc">-</div><div class="l">Cykle</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Temperatury (°C)</h2>
+    <div class="temps" id="temps"></div>
+  </section>
+
+  <section>
+    <h2>Rezystancja przewodów balansera (Ω)</h2>
+    <div class="rw" id="rw"></div>
+  </section>
+
+  <section>
+    <h2>Ustawienia odczytu</h2>
+    <div class="status">Układ ramki:
+      <button type="button" class="btn sec" id="ver">Auto</button>
+    </div>
+    <p class="note" id="vernote">Auto rozpoznaje układ po wersji sprzętu BMS (od 11.x jest 32S). Gdy wartości wyglądają dziwnie, przełącz ręcznie na 24S albo 32S. Dla Twojego BMS (16S, grzałka, czujniki T1 do T5) powinno być 32S.</p>
+  </section>
+</div>
+
+<script>
+var $=function(i){return document.getElementById(i)};
+var f=function(x,n){return x.toFixed(n).replace(".",",")};
+
+// ---- Dane przykładowe (ze zrzutu ekranu 13:10), pokazywane do czasu połączenia ----
+var SAMPLE={soc:72,volt:53.43,cur:0,rem:200.2,nom:280,cyc:41,chg:true,dis:true,bal:0,balCur:0,
+ cells:[3.338,3.338,3.338,3.339,3.339,3.337,3.337,3.338,3.338,3.338,3.339,3.339,3.339,3.339,3.339,3.338],
+ wires:[0.068,0.064,0.064,0.062,0.060,0.065,0.067,0.056,0.060,0.058,0.063,0.062,0.080,0.076,0.061,0.067],
+ temps:[["MOSFET",32.5],["T1",22.0],["T2",20.4],["T4",21.5],["T5",21.5]]};
+
+// ---- Wyświetlanie ----
+function render(d){
+  $("soc").textContent=d.soc;$("meter").style.width=d.soc+"%";
+  $("volt").textContent=f(d.volt,2);$("cur").textContent=f(d.cur,2);
+  var p=Math.abs(d.cur*d.volt),act=Math.abs(d.cur)>=0.05;
+  $("flow").className="flow "+(!act?"idle":d.cur>0?"chg":"dis");
+  $("fpow").textContent=p<10?f(p,1):Math.round(p);
+  if(!act){$("arrow").textContent="●";$("fstate").textContent="Bezczynny";$("fsub").textContent="Brak przepływu prądu"}
+  else{
+    var a=Math.abs(d.cur),hrs=d.cur>0?(d.nom-d.rem)/a:d.rem/a,h=Math.floor(hrs),m=Math.round((hrs-h)*60);
+    $("arrow").textContent=d.cur>0?"▲":"▼";
+    $("fstate").textContent=d.cur>0?"Ładowanie":"Rozładowanie";
+    $("fsub").textContent=f(a,1)+" A, "+(d.cur>0?"do pełna ok. ":"do pustej ok. ")+h+" h "+m+" min";
+  }
+  setChip("chg",d.chg);setChip("dis",d.dis);
+  $("d-bal").className="dot"+(d.bal?"":" off");
+  $("t-bal").textContent=d.bal?(d.bal==1?"ładuje":"rozładowuje")+" "+f(Math.abs(d.balCur),2)+" A":"OFF";
+  var mx=Math.max.apply(null,d.cells),mn=Math.min.apply(null,d.cells);
+  $("vmax").textContent=f(mx,3);$("vmin").textContent=f(mn,3);$("vdiff").textContent=Math.round((mx-mn)*1000);
+  var A0=Math.floor((mn-0.003)*200)/200,A1=Math.max(A0+0.015,Math.ceil((mx+0.002)*200)/200);
+  $("ax0").textContent=f(A0,3)+" V";$("ax1").textContent=f(A1,3)+" V";
+  var h2="";
+  d.cells.forEach(function(v,i){
+    var cls=mx===mn?"":(v===mx?" max":(v===mn?" min":""));
+    var w=Math.max(2,Math.min(100,(v-A0)/(A1-A0)*100));
+    h2+='<div class="cell'+cls+'"><span class="n">'+String(i+1).padStart(2,"0")+'</span><div class="track"><i style="width:'+w+'%"></i></div><span class="val">'+f(v,3)+'</span></div>';
+  });
+  $("cells").innerHTML=h2;
+  $("rem").textContent=f(d.rem,1);$("nom").textContent=f(d.nom,1);$("cyc").textContent=d.cyc;
+  $("temps").innerHTML=d.temps.map(function(t){return '<div class="stat"><div class="v">'+f(t[1],1)+'</div><div class="l">'+t[0]+'</div></div>'}).join("");
+  $("rw").innerHTML=d.wires.map(function(v,i){return '<div><span>'+String(i+1).padStart(2,"0")+'</span>'+f(v,3)+'</div>'}).join("");
+}
+function setChip(k,on){$("d-"+k).className="dot"+(on?"":" off");$("t-"+k).textContent=on?"ON":"OFF"}
+render(SAMPLE);
+
+// ---- Dekodowanie ramki JK02 (offsety wg projektu esphome-jk-bms) ----
+var verMode="auto",detected=null;
+function decode(b){
+  var u8=function(i){return b[i]};
+  var u16=function(i){return b[i]|(b[i+1]<<8)};
+  var i16=function(i){var v=u16(i);return v>32767?v-65536:v};
+  var u32=function(i){return (b[i]|(b[i+1]<<8)|(b[i+2]<<16)|(b[i+3]<<24))>>>0};
+  var i32=function(i){return b[i]|(b[i+1]<<8)|(b[i+2]<<16)|(b[i+3]<<24)};
+  var is32=verMode==="32"||(verMode==="auto"&&detected==="32");
+  var o1=is32?16:0,o2=is32?32:0,n=is32?32:24;
+  var cells=[],wires=[];
+  for(var i=0;i<n;i++){
+    var v=u16(i*2+6)/1000;
+    if(v>0){cells.push(v);wires.push(u16(i*2+64+o1)/1000)}
+  }
+  var temps=[],ok=function(t){return t>-40&&t<120};
+  var mos=i16(is32?144:134)/10;if(ok(mos))temps.push(["MOSFET",mos]);
+  var t1=i16(130+o2)/10,t2=i16(132+o2)/10;
+  if(ok(t1))temps.push(["T1",t1]);if(ok(t2))temps.push(["T2",t2]);
+  if(is32){[[258,"T3"],[256,"T4"],[254,"T5"]].forEach(function(x){var t=i16(x[0])/10;if(ok(t))temps.push([x[1],t])})}
+  return {cells:cells,wires:wires,temps:temps,
+    volt:u32(118+o2)/1000,cur:i32(126+o2)/1000,balCur:i16(138+o2)/1000,bal:u8(140+o2),
+    soc:u8(141+o2),rem:u32(142+o2)/1000,nom:u32(146+o2)/1000,cyc:u32(150+o2),
+    chg:!!u8(166+o2),dis:!!u8(167+o2)};
+}
+function crc(b,len){var c=0;for(var i=0;i<len;i++)c=(c+b[i])&255;return c}
+
+// ---- Bluetooth ----
+var chr=null,dev=null,buf=[],lastFrame=0,timer=null,wake=null;
+function showErr(t){var e=$("err");e.hidden=!t;e.textContent=t||""}
+function cmd(code){
+  var fr=new Uint8Array(20);fr[0]=0xAA;fr[1]=0x55;fr[2]=0x90;fr[3]=0xEB;fr[4]=code;
+  fr[19]=crc(fr,19);
+  return chr.writeValueWithoutResponse?chr.writeValueWithoutResponse(fr):chr.writeValue(fr);
+}
+function onChunk(ev){
+  var c=new Uint8Array(ev.target.value.buffer);
+  if(c.length>=4&&c[0]===0x55&&c[1]===0xAA&&c[2]===0xEB&&c[3]===0x90)buf=[];
+  for(var i=0;i<c.length;i++)buf.push(c[i]);
+  if(buf.length>400)buf=[];
+  if(buf.length>=300){
+    var fr=buf.slice(0,300);buf=[];
+    if(crc(fr,299)!==fr[299])return;
+    var t=fr[4];
+    if(t===3){
+      var hw=String.fromCharCode.apply(null,fr.slice(22,30)).replace(/\0.*$/,"");
+      var major=parseInt(hw,10);
+      detected=major>=11?"32":"24";
+      $("info").textContent="Połączono. Sprzęt "+hw+" (układ "+detected+"S).";
+    }else if(t===2){
+      try{
+        var d=decode(fr);
+        if(d.cells.length&&d.soc<=100&&d.volt>5&&d.volt<200){
+          lastFrame=Date.now();render(d);
+          $("mode").textContent="na żywo";$("mode").className="pill live";
+        }else{showErr("Dziwne dane z BMS. Spróbuj przełączyć układ ramki (24S lub 32S) na dole strony.")}
+      }catch(e){showErr("Błąd dekodowania: "+e.message)}
+    }
+  }
+}
+async function connect(){
+  showErr("");
+  if(!navigator.bluetooth){showErr("Ta przeglądarka nie obsługuje Web Bluetooth. Użyj Chrome na Androidzie (nie iPhone).");return}
+  try{
+    dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[0xffe0]});
+    dev.addEventListener("gattserverdisconnected",function(){
+      $("mode").textContent="rozłączono";$("mode").className="pill demo";$("info").textContent="Połączenie przerwane.";
+      $("connect").textContent="Połącz z BMS";clearInterval(timer);
+    });
+    $("info").textContent="Łączenie…";
+    var srv=await dev.gatt.connect();
+    var svc=await srv.getPrimaryService(0xffe0);
+    chr=await svc.getCharacteristic(0xffe1);
+    chr.addEventListener("characteristicvaluechanged",onChunk);
+    await chr.startNotifications();
+    await cmd(0x97);
+    setTimeout(function(){cmd(0x96).catch(function(){})},400);
+    clearInterval(timer);
+    timer=setInterval(function(){if(Date.now()-lastFrame>4000)cmd(0x96).catch(function(){})},3000);
+    $("connect").textContent="Rozłącz";
+    try{if(navigator.wakeLock)wake=await navigator.wakeLock.request("screen")}catch(e){}
+  }catch(e){
+    if(e&&e.name==="NotFoundError")return;
+    showErr("Nie udało się połączyć: "+(e&&e.message?e.message:e)+". Sprawdź, czy aplikacja JK BMS jest zamknięta.");
+    $("info").textContent="";
+  }
+}
+$("connect").onclick=function(){
+  if(dev&&dev.gatt&&dev.gatt.connected){dev.gatt.disconnect();return}
+  connect();
+};
+$("ver").onclick=function(){
+  verMode=verMode==="auto"?"32":verMode==="32"?"24":"auto";
+  $("ver").textContent=verMode==="auto"?"Auto":verMode+"S";
+};
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState==="visible"&&dev&&dev.gatt.connected&&navigator.wakeLock){navigator.wakeLock.request("screen").catch(function(){})}
+});
+</script>
+</body>
+</html>
