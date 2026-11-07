@@ -10,13 +10,13 @@
 :root{
   --bg:#0c1210;--surface:#151d1a;--fg:#e8f0ec;--muted:#8fa399;--line:#26332d;
   --accent:#3ddc84;--good:#3ddc84;--warn:#f0b24a;--bad:#ff6b6b;--hi:#6db3ff;--lo:#ff7b7b;
-  --bar:#1f5a3c;--bar-hi:#2c5f9a;--bar-lo:#7a2f2f;
+  --bar:#1f5a3c;--bar-hi:#2c5f9a;--bar-lo:#7a2f2f;--c-volt:#4cc9f0;--c-cur:#ffd166;--c-cap:#b388ff;--c-temp:#ff9f6e;--c-res:#5eead4;--c-cell:#4ade80;
   --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,Consolas,monospace;
   color-scheme:dark}
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
   --bg:#f3f5f4;--surface:#fff;--fg:#14201b;--muted:#5b6b64;--line:#d9e0dc;
   --accent:#0d8a4f;--good:#0d8a4f;--warn:#b36b00;--bad:#c62828;--hi:#1565c0;--lo:#c62828;
-  --bar:#bfe3cf;--bar-hi:#7fb4ee;--bar-lo:#f0a3a3;color-scheme:light}}
+  --bar:#bfe3cf;--bar-hi:#7fb4ee;--bar-lo:#f0a3a3;--c-volt:#0077b6;--c-cur:#b8860b;--c-cap:#7c4dff;--c-temp:#d9541e;--c-res:#0f9488;--c-cell:#16a34a;color-scheme:light}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.4;
  padding:16px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px))}
@@ -65,6 +65,40 @@ h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
 .rw div{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;display:flex;gap:6px}
 .rw span{color:var(--muted);width:20px}
 @media(max-width:380px){.soc{font-size:52px}.stats,.temps{grid-template-columns:repeat(2,1fr)}.rw{grid-template-columns:repeat(2,1fr)}.fl-p b{font-size:30px}.fl-state{font-size:20px}}
+/* Kompaktowy, kolorowy wariant */
+body{font-size:14px;padding-top:10px}
+.wrap{gap:9px}
+h1{font-size:15px}
+.btn{padding:7px 14px;font-size:13px}
+.status{font-size:12px}
+.flow{padding:10px 12px;gap:10px;border-radius:12px}
+.arrow{width:38px;height:38px;font-size:20px}
+.fl-state{font-size:18px}.fl-sub{font-size:12px}
+.fl-p b{font-size:28px}.fl-p span{font-size:13px}
+.hero{padding:10px 12px;gap:8px 12px;border-radius:12px;background:linear-gradient(135deg,var(--surface),color-mix(in srgb,var(--c-volt) 16%,var(--surface)))}
+.soc{font-size:44px}.soc small{font-size:20px}
+.big{font-size:19px;color:var(--c-volt)}.big+.big{color:var(--c-cur)}
+.big em{font-size:12px}.big span{font-size:12px}
+.meter{height:8px}
+.meter i{background:linear-gradient(90deg,var(--bad),var(--warn),var(--good))}
+.chip{padding:4px 10px;font-size:12px}
+section{padding:11px 12px;border-radius:12px;border-top:3px solid var(--sc,var(--line))}
+h2{font-size:11px;margin-bottom:8px;color:var(--sc,var(--muted))}
+.stat .v{font-size:17px;color:var(--vc,var(--fg))}.stat .l{font-size:11px}
+.stat .v.hi{color:var(--hi)}.stat .v.lo{color:var(--lo)}
+section:nth-of-type(1){--sc:var(--c-cell);--vc:var(--c-cell)}
+section:nth-of-type(2){--sc:var(--c-cap);--vc:var(--c-cap)}
+section:nth-of-type(3){--sc:var(--c-temp);--vc:var(--c-temp)}
+section:nth-of-type(4){--sc:var(--c-res);--vc:var(--c-res)}
+section:nth-of-type(5){--sc:var(--c-cur)}
+.cells{gap:3px}.cell{grid-template-columns:22px 1fr 52px;gap:6px}
+.track{height:12px}.track i{background:linear-gradient(90deg,var(--c-cell),var(--c-volt))}
+.cell.max .track i{background:var(--bar-hi)}.cell.min .track i{background:var(--bar-lo)}
+.cell .val{font-size:13px}.cell .n{font-size:11px}
+.axis{font-size:10px;margin:5px 58px 0 28px}
+.note{font-size:11px;margin-top:6px}
+.rw{gap:5px 10px}.rw div{font-size:12px;color:var(--c-res)}.rw span{width:16px;color:var(--muted)}
+.chip:nth-child(1) b{color:var(--good)}.chip:nth-child(2) b{color:var(--c-cur)}.chip:nth-child(3) b{color:var(--c-cap)}
 </style>
 </head>
 <body>
@@ -150,6 +184,7 @@ var SAMPLE={soc:72,volt:53.43,cur:0,rem:200.2,nom:280,cyc:41,chg:true,dis:true,b
 // ---- Wyświetlanie ----
 function render(d){
   $("soc").textContent=d.soc;$("meter").style.width=d.soc+"%";
+  $("soc").parentNode.style.color=d.soc<20?"var(--bad)":d.soc<50?"var(--warn)":"var(--good)";
   $("volt").textContent=f(d.volt,2);$("cur").textContent=f(d.cur,2);
   var p=Math.abs(d.cur*d.volt),act=Math.abs(d.cur)>=0.05;
   $("flow").className="flow "+(!act?"idle":d.cur>0?"chg":"dis");
@@ -176,7 +211,7 @@ function render(d){
   });
   $("cells").innerHTML=h2;
   $("rem").textContent=f(d.rem,1);$("nom").textContent=f(d.nom,1);$("cyc").textContent=d.cyc;
-  $("temps").innerHTML=d.temps.map(function(t){return '<div class="stat"><div class="v">'+f(t[1],1)+'</div><div class="l">'+t[0]+'</div></div>'}).join("");
+  $("temps").innerHTML=d.temps.map(function(t){return '<div class="stat"><div class="v" style="color:'+(t[1]>45?"var(--bad)":t[1]>35?"var(--warn)":t[1]<5?"var(--hi)":"var(--c-temp)")+'">'+f(t[1],1)+'</div><div class="l">'+t[0]+'</div></div>'}).join("");
   $("rw").innerHTML=d.wires.map(function(v,i){return '<div><span>'+String(i+1).padStart(2,"0")+'</span>'+f(v,3)+'</div>'}).join("");
 }
 function setChip(k,on){$("d-"+k).className="dot"+(on?"":" off");$("t-"+k).textContent=on?"ON":"OFF"}
